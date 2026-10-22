@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ANIME FREE - ดูอนิเมะฟรี</title>
+<style>
+:root{--bg:#0f0f13;--card:#1a1a22;--muted:#9aa0aa;--accent:#ff6b00;--border:#262631}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#fff;font-family:system-ui,sans-serif}
+.header{position:sticky;top:0;z-index:50;background:rgba(15,15,19,.95);border-bottom:1px solid var(--border)}
+.container{max-width:1280px;margin:0 auto;padding:0 20px}
+.nav{height:64px;display:flex;gap:12px;align-items:center}
+.logo{font-weight:900;font-size:22px}.logo span{color:var(--accent)}
+.search{flex:1;max-width:420px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 12px;display:flex}
+.search input{background:transparent;border:0;outline:0;color:#fff;width:100%}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;margin-top:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;display:block;text-decoration:none;color:#fff}
+.card img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block}
+.badge{position:absolute;top:8px;left:8px;background:var(--accent);color:#000;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:700}
+.meta{padding:10px}.title{font-size:14px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sub{color:var(--muted);font-size:12px;margin-top:4px}
+.hero{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin:18px 0}
+.hero-main{border-radius:16px;min-height:200px;background:linear-gradient(120deg,#221a12,#1a1a22);padding:24px;display:flex;flex-direction:column;justify-content:end}
+.ep{padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;cursor:pointer;color:#fff;text-decoration:none;display:inline-block}
+.ep.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.btn{background:var(--accent);color:#000;font-weight:800;border:0;border-radius:10px;padding:10px 16px;cursor:pointer;text-decoration:none;display:inline-block}
+</style>
+</head>
+<body>
+<header class="header"><div class="container nav">
+<div class="logo">ANIME <span>FREE</span></div>
+<div class="search"><input id="q" placeholder="ค้นหาอนิเมะ พิมพ์ได้เลย..."/></div>
+<div style="display:flex;gap:8px">
+<a class="ep active" data-filter="all">ทั้งหมด</a>
+<a class="ep" data-filter="ซับไทย">ซับไทย</a>
+<a class="ep" data-filter="พากย์ไทย">พากย์ไทย</a>
+</div>
+</div></header>
+
+<main class="container" id="main">
+<div class="hero">
+<div class="hero-main">
+<h1 style="margin:0">ดูอนิเมะฟรี ไม่มีโฆษณา</h1>
+<p style="color:#9aa0aa"><span id="count">0</span> เรื่อง • พร้อมใช้งานทันที ไม่ต้องรอ fetch</p>
+</div>
+<div style="background:#1a1a22;border:1px solid #262631;border-radius:16px;padding:14px">
+<h3 style="margin:6px 0">🔥 ยอดนิยม</h3><div id="topList"></div>
+<div id="status" style="margin-top:10px;padding:8px;background:#0f0f13;border-radius:8px;font-size:12px;color:#9aa0aa"></div>
+</div>
+</div>
+<div id="grid" class="grid"></div>
+</main>
+
+<script>
+// EMBEDDED DATA - จะเจอหนังทันทีแม้ fetch ล้มเหลว
+const EMBEDDED_DATA = [
+  {"id":"zhu-xian-4th-season","title":"Zhu Xian 4th Season จูเซียน กระบี่เทพสังหาร ภาค 4 ตอนที่ 1-12 ซับไทย","link":"https://animemaji.com/zhu-xian-4th-season/","type":"ซับไทย","episode":"ตอน 1-12","cover":"https://picsum.photos/seed/zhu4/400/560"},
+  {"id":"kuang-wang-2","title":"Kuang Wang 2 ราชันอสูรคลั่ง ภาค 2 ตอนที่ 1-7 ซับไทย","link":"https://animemaji.com/kuang-wang-2/","type":"ซับไทย","episode":"ตอน 1-7","cover":"https://picsum.photos/seed/kuang2/400/560"},
+  {"id":"renegade-immortal","title":"Renegade Immortal ฝืนลิขิตฟ้าข้าขอเป็นเซียน ตอนที่ 1-5 พากย์ไทย","link":"https://animemaji.com/renegade-immortal/","type":"พากย์ไทย","episode":"ตอน 1-5","cover":"https://picsum.photos/seed/renegade/400/560"},
+  {"id":"perfect-world-season-th","title":"Perfect World โลกอันสมบูรณ์แบบ ตอนที่ 1-282 พากย์ไทย","link":"https://animemaji.com/perfect-world-season-th/","type":"พากย์ไทย","episode":"ตอน 1-282","cover":"https://picsum.photos/seed/perfect/400/560"},
+  {"id":"tunshi-xingkong-epend","title":"Tunshi Xingkong มหาศึกล้างพิภพ ตอนที่ 1-244 พากย์ไทย","link":"https://animemaji.com/tunshi-xingkong-epend/","type":"พากย์ไทย","episode":"ตอน 1-244","cover":"https://picsum.photos/seed/tunshi/400/560"},
+  {"id":"wan-jie-du-zun-submai","title":"Wan Jie Du Zun หมื่นอาณาจักรจอมราชันย์ ตอนที่ 1-474 ซับไทย","link":"https://animemaji.com/wan-jie-du-zun-submai/","type":"ซับไทย","episode":"ตอน 1-474","cover":"https://picsum.photos/seed/wanjie/400/560"},
+  {"id":"shen-yin-wangzuo-th","title":"Shen Yin Wangzuo ผนึกเทพบัลลังก์ราชันย์ ตอนที่ 1-136 พากย์ไทย","link":"https://animemaji.com/shen-yin-wangzuo-th/","type":"พากย์ไทย","episode":"ตอน 1-136","cover":"https://picsum.photos/seed/shenyin/400/560"},
+  {"id":"tsuihou-sareta-tensei","title":"เกิดใหม่เป็นอัศวินเกราะหนัก ตอนที่ 1-17 ซับไทย","link":"https://animemaji.com/tsuihou-sareta-tensei/","type":"ซับไทย","episode":"ตอน 1-17","cover":"https://picsum.photos/seed/tsuihou/400/560"}
+];
+
+let ALL = EMBEDDED_DATA;
+
+async function init(){
+  const status = document.getElementById('status');
+  try{
+    // พยายามโหลด api/latest.json ถ้ามี (GitHub Actions จะสร้าง)
+    const res = await fetch('./api/latest.json?t='+Date.now());
+    if(res.ok){
+      const json = await res.json();
+      if(json && json.length>0){
+        ALL = json;
+        status.textContent = '✅ โหลดจาก api/latest.json สำเร็จ: ' + ALL.length + ' เรื่อง (จาก GitHub Actions)';
+      } else {
+        status.textContent = '⚠️ api/latest.json ว่าง ใช้ข้อมูลฝังแทน: ' + ALL.length + ' เรื่อง';
+      }
+    } else {
+      status.textContent = 'ℹ️ ใช้ข้อมูลฝังในไฟล์ (ยังไม่ได้รัน GitHub Actions): ' + ALL.length + ' เรื่อง';
+    }
+  }catch(e){
+    status.textContent = 'ℹ️ ใช้ข้อมูลฝังในไฟล์ (fetch ล้มเหลว): ' + ALL.length + ' เรื่อง - ' + e.message;
+  }
+  render(ALL);
+  setupFilters();
+}
+
+function render(items){
+  const grid=document.getElementById('grid');
+  if(!grid) return;
+  if(!items.length){
+    grid.innerHTML='<div style="color:#ff6b00;padding:20px">ไม่พบหนัง - ลองล้าง cache หรือเช็ค api/latest.json</div>';
+    return;
+  }
+  grid.innerHTML = items.map(it=>`
+    <a class="card" href="#" onclick="openDetail('${it.id}');return false;">
+      <div style="position:relative">
+        <img src="${it.cover}" loading="lazy" onerror="this.src='https://picsum.photos/seed/${it.id}/400/560'">
+        <span class="badge">${it.episode||it.type}</span>
+      </div>
+      <div class="meta"><div class="title">${it.title}</div><div class="sub">${it.type} • ${it.episode}</div></div>
+    </a>`).join('');
+  document.getElementById('count').textContent = items.length;
+  const top=document.getElementById('topList');
+  if(top) top.innerHTML = items.slice(0,5).map(it=>`
+    <a href="#" onclick="openDetail('${it.id}');return false;" style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #262631;color:#fff;text-decoration:none">
+      <img src="${it.cover}" style="width:48px;height:64px;object-fit:cover;border-radius:6px" onerror="this.src='https://picsum.photos/seed/${it.id}/100/100'">
+      <div><div style="font-size:13px;line-height:1.3">${it.title.slice(0,45)}</div><small style="color:#ff6b00">${it.episode}</small></div>
+    </a>`).join('');
+}
+
+function setupFilters(){
+  const q=document.getElementById('q');
+  if(q){
+    q.addEventListener('input', e=>{
+      const v=e.target.value.toLowerCase().trim();
+      render(v? ALL.filter(it=>it.title.toLowerCase().includes(v) || it.id.includes(v)): ALL);
+    });
+  }
+  document.querySelectorAll('[data-filter]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('[data-filter]').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      const f=b.dataset.filter;
+      render(f==='all'? ALL: ALL.filter(it=>(it.type||'').includes(f)));
+    });
+  });
+}
+
+function openDetail(id){
+  const it=ALL.find(x=>x.id===id);
+  if(!it){ alert('ไม่พบเรื่อง id='+id); return; }
+  let total=12;
+  const m=(it.episode||'').match(/(\d+)\s*-\s*(\d+)/);
+  if(m) total=parseInt(m[2]);
+  else { const m2=(it.episode||'').match(/(\d+)/); if(m2) total=Math.min(24, Math.max(12, parseInt(m2[1]))); }
+  if(total>50) total=24;
+  document.getElementById('main').innerHTML=`
+    <div style="margin-top:18px;display:grid;grid-template-columns:280px 1fr;gap:20px">
+      <div>
+        <img src="${it.cover}" style="width:100%;border-radius:14px;border:1px solid #262631" onerror="this.src='https://picsum.photos/seed/${it.id}/400/560'">
+        <div style="margin-top:12px;background:#1a1a22;border:1px solid #262631;border-radius:12px;padding:12px;font-size:13px;color:#9aa0aa">
+          ประเภท: ${it.type}<br>ตอน: ${it.episode}<br>
+          <a href="${it.link}" target="_blank" style="color:#ff6b00">ดูต้นฉบับ</a>
+        </div>
+      </div>
+      <div>
+        <a href="#" onclick="location.reload();return false;" style="color:#9aa0aa">← กลับหน้าแรก</a>
+        <h1 style="font-size:24px;margin:10px 0">${it.title}</h1>
+        <p style="color:#9aa0aa">${it.type} • ${it.episode}</p>
+        <div style="margin:16px 0;display:flex;gap:10px">
+          <a class="btn" href="#" onclick="openWatch('${it.id}',${total});return false;">▶ ดูตอนล่าสุด (ตอน ${total})</a>
+          <a class="ep" href="#" onclick="openWatch('${it.id}',1);return false;">ดูตอนแรก</a>
+        </div>
+        <h3>ตอนทั้งหมด (${total} ตอน) - กดเพื่อเล่นได้เลย</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+          ${Array.from({length:total},(_,i)=>`<a href="#" onclick="openWatch('${it.id}',${i+1});return false;" class="ep">ตอน ${i+1}</a>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function openWatch(id, ep){
+  const it=ALL.find(x=>x.id===id);
+  let total=24;
+  const m=(it.episode||'').match(/(\d+)\s*-\s*(\d+)/);
+  if(m) total=parseInt(m[2]);
+  if(total>50) total=24;
+  document.getElementById('main').innerHTML=`
+    <div style="margin-top:16px">
+      <a href="#" onclick="openDetail('${id}');return false;" style="color:#9aa0aa">← กลับไปหน้ารายละเอียด</a>
+      <h2>${it.title} - ตอนที่ ${ep}</h2>
+      <div style="aspect-ratio:16/9;background:#000;border-radius:14px;display:grid;place-items:center;border:1px solid #262631">
+        <div style="text-align:center;padding:20px">
+          <div style="font-size:56px">▶</div>
+          <div style="color:#fff;font-size:20px;margin-top:8px">กำลังเล่นตอนที่ ${ep}</div>
+          <div style="color:#9aa0aa;margin-top:6px">Demo Player - ใส่ลิงก์วิดีโอของคุณใน api/latest.json field embed_url ได้</div>
+          <div style="margin-top:12px"><span style="background:#ff6b00;color:#000;padding:6px 12px;border-radius:20px;font-weight:700">${it.type} - ${it.episode}</span></div>
+        </div>
+      </div>
+      <div style="margin:16px 0;display:flex;gap:10px">
+        <a href="#" onclick="openWatch('${id}',${Math.max(1,ep-1)});return false;" class="ep">← ตอนก่อน</a>
+        <a href="#" onclick="openWatch('${id}',${Math.min(total,ep+1)});return false;" class="ep" style="background:#ff6b00;color:#000">ตอนต่อไป →</a>
+        <a href="#" onclick="location.reload();return false;" class="ep">หน้าแรก</a>
+      </div>
+      <h3>เลือกตอน</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${Array.from({length:total},(_,i)=>{
+          const n=i+1;
+          const active = n===ep ? 'background:#ff6b00;color:#000;border-color:#ff6b00' : '';
+          return `<a href="#" onclick="openWatch('${id}',${n});return false;" class="ep" style="${active}">ตอน ${n}</a>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
